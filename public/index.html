@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#000000" />
     <meta
@@ -24,9 +25,39 @@
       work correctly both with client-side routing and a non-root public URL.
       Learn how to configure a non-root public URL by running `npm run build`.
     -->
+    <script>
+		// make the whole serviceworker process into a promise so later on we can
+		// listen to it and in case new content is available a toast will be shown
+		window.isUpdateAvailable = new Promise(function(resolve, reject) {
+			// lazy way of disabling service workers while developing
+			if ('serviceWorker' in navigator && ['localhost', '127'].indexOf(location.hostname) === -1) {
+				// register service worker file
+				navigator.serviceWorker.register('service-worker.js')
+					.then(reg => {
+						reg.onupdatefound = () => {
+							const installingWorker = reg.installing;
+							installingWorker.onstatechange = () => {
+								switch (installingWorker.state) {
+									case 'installed':
+										if (navigator.serviceWorker.controller) {
+											// new update available
+											resolve(true);
+										} else {
+											// no update available
+											resolve(false);
+										}
+										break;
+								}
+							};
+						};
+					})
+					.catch(err => console.error('[SW ERROR]', err));
+			}
+		});
+	</script>
     <title>React App</title>
   </head>
-  <body>
+  <body dir="rtl">
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
     <!--
